@@ -1,14 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>rhythm-game</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script src="js/p5.min.js"></script>
-    <script src="js/addons/p5.sound.min.js"></script>
-</head>
-<body>
-    <script src="sketch.js"></script>
-</body>
+<html>
+	<head>
+		<title>Rhythm Game</title>
+		<style>
+			body{
+				background-color:#ffffff;
+				text-align: center;
+			}
+			#game{
+				width:600px;
+				height:400px;
+				border:2px solid #000000;
+				background-color:#dedede;
+				padding-left: 0;
+				padding-right: 0;
+				margin-left: auto;
+				margin-right: auto;
+
+				/* scale up pixels */
+				image-rendering: -moz-crisp-edges;
+		        image-rendering: -webkit-crisp-edges;
+		        image-rendering: pixelated;
+		        image-rendering: crisp-edges;
+			}
+            .gameIMG{
+                display:none;
+            }
+		</style>
+	</head>
+	<body onload="init()">
+		<!--<div id="debugBar"><p id="debug" style="color:white">...</p></div>-->
+		<canvas id='game'>Browser does not support HTML5 canvas</canvas>
+		<script src="code.js"></script>
+        <img src="assets/p5.png" class="gameIMG" id="playerIMG"> 
+	</body>
 </html>
