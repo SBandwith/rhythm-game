@@ -10,7 +10,7 @@ var GRAVITY = 4;
 var JUMP = -8;
 var OBS_SPEED = 4;
 
-var GAME_OVER = false;
+var GAME_OVER = true;
 
 
 var SONG_BPM = 80;
@@ -58,7 +58,7 @@ class Obstacle{
     }
 
     update(){
-        this.x -= Math.floor((canvas.width-player.x) / SONG_BPM);
+        this.x -= 2.75;
         if(this.x + this.w <= 0) {
             this.alive = false;
         }
@@ -381,6 +381,7 @@ function main(){
 	//panCamera();
     update();
 	render();
+    renderBEAT();
 
 	//keyboard ticks
 	var akey = anyKey();
@@ -391,6 +392,45 @@ function main(){
 		kt = 0;
 		keyTick=0;
 	}
+
+
+
+
+    if(aud.paused){
+		document.getElementById("inputs").style.display = "block";
+	}else{
+		document.getElementById("inputs").style.display = "none";
+	}
+
+	// renderBEAT();
+
+	if(song != null)
+		marker = (aud.currentTime * (beatCanvas.width-2*offsetX) / aud.duration)
+
+	if(!aud.paused){
+		songMark = (aud.currentTime/aud.duration);
+	
+		if(bi < beatConv.length-1 && songMark >= beatConv[bi]){
+			//beatHeart();
+			bi++;
+		}
+		if(abi < artBeatConv.length-1 && songMark >= artBeatConv[abi]){
+			//beatOuterHeart();
+
+			energy-=1;			//missed a normal beat
+			if(energy < 0)	
+				energy = 0;
+
+			// updateBackground();
+			abi++;
+		}
+		if(ri < rhythmConv.length-1 && songMark >= rhythmConv[ri]){
+			//beatHeart();
+			ri++;
+		}
+	}
+
+
 
     // reset
     if(keys[reset_key]){

@@ -25,12 +25,16 @@
             .gameIMG{
                 display:none;
             }
-
-			#stat{
-				display:flex;
-				justify-content: space-between;
+			#stats{
+				margin-top:10px;
 			}
-			#stats p{
+
+			#gameStats{
+				display: flex;
+				justify-content: space-between;
+				margin-top:1em;
+			}
+			#gameStats p{
 				margin: auto;
 			}
 		</style>
@@ -39,10 +43,21 @@
 		<!--<div id="debugBar"><p id="debug" style="color:white">...</p></div>-->
 		<canvas id='game'>Browser does not support HTML5 canvas</canvas>
 
+		
 		<div id="stats">
-			<p id="level">Level: 0</p>
-			<p id="good_jumps">Good Jumps: 0</p>
-			<p id="hits">Hits: 0</p>
+			<div id='inputs'>
+				<input type='file' name='song' accept='.mp3' id='songFile'>
+				<button id='playBtn' onclick="playMusic()">Play Song</button>
+				<button id='resetBtn' onclick="resetMusic()">Reset Song</button>
+			</div>
+			<audio id='audio'></audio>
+			<div id="gameStats">
+				<p id="level">Level: 0</p>
+				<p id="good_jumps">Good Jumps: 0</p>
+				<p id="hits">Hits: 0</p>	
+			</div>
+
+			
 		</div>	
 		
         <img src="assets/p5.png" class="gameIMG" id="playerDemoIMG"> 
@@ -53,9 +68,12 @@
         <img src="assets/player1.png" class="gameIMG" id="player1IMG">
         <img src="assets/player2.png" class="gameIMG" id="player2IMG">
 
+		
 
 
 
+		
+		<script src="beat_code.js"></script>
 		<script src="code.js"></script>
 	</body>
 </html>
