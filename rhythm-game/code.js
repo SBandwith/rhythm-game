@@ -41,6 +41,7 @@ function gameObj(x,y,w,h,img,img_offset=null){
     this.img_offset = img_offset;
     this.bbox = new bBox(0, 0, w, h);
     this.cooldown = false;
+    this.invincible = false;
 }
 
 class Obstacle{
@@ -58,7 +59,7 @@ class Obstacle{
     }
 
     update(){
-        this.x -= 2.75;
+        this.x -= OBS_SPEED;
         if(this.x + this.w <= 0) {
             this.alive = false;
         }
@@ -182,7 +183,7 @@ function generateObstacle(){
     console.log("beat");
 }
 
-oi = setInterval(generateObstacle, 1000/((SONG_BPM / 60)));
+// oi = setInterval(generateObstacle, 1000/((SONG_BPM / 60)));
 
 
 ////////////////   COLLISIONS FUNCTIONS   /////////////////
@@ -321,7 +322,7 @@ function update(){
             o.update();
 
             // if touching player, register a hit and apply cooldown
-            if(!player.cooldown && isColliding(player,o)){
+            if(!player.invincible && !player.cooldown && isColliding(player,o)){
                 hits++;
                 good_jumps = 0;
                 player.cooldown = true;
@@ -369,9 +370,35 @@ function init(){
     player.img = document.getElementById("player1IMG");
 }
 
+function resetMap(){
+    GAME_OVER = false;
+    ALL_OBSTACLES = [];
+    ALL_OBJS = [player];
+    player.x = 100;
+    player.y = 200;
+    player.velY = 0;
+    player.jumping = false;
+}
+
 var levelText = document.getElementById("level");
 var goodJumpsText = document.getElementById("good_jumps");
 var hitsText = document.getElementById("hits");
+
+
+var songBeatNum = 0;
+var lastBeat = 0;
+var musicOffset = 0.23;
+document.getElementById("offsetMusic").addEventListener("input", function(){
+    musicOffset = parseFloat(this.value);
+});
+
+oi = setInterval(function(){
+    if(songBeatNum != lastBeat){
+        lastBeat = songBeatNum;
+        generateObstacle();
+    }
+}, 1);
+
 
 //main game loop
 function main(){
@@ -394,63 +421,50 @@ function main(){
 	}
 
 
-
-
-    if(aud.paused){
-		document.getElementById("inputs").style.display = "block";
-	}else{
-		document.getElementById("inputs").style.display = "none";
-	}
-
 	// renderBEAT();
 
 	if(song != null)
-		marker = (aud.currentTime * (beatCanvas.width-2*offsetX) / aud.duration)
+		marker = (aud.currentTime * (canvas.width-2*offsetX) / aud.duration)
 
 	if(!aud.paused){
 		songMark = (aud.currentTime/aud.duration);
+		songBeatNum = Math.floor((songMark + musicOffset) * totBeats);
+
+
+        
 	
-		if(bi < beatConv.length-1 && songMark >= beatConv[bi]){
-			//beatHeart();
-			bi++;
-		}
-		if(abi < artBeatConv.length-1 && songMark >= artBeatConv[abi]){
-			//beatOuterHeart();
+		// if(bi < beatConv.length-1 && songMark >= beatConv[bi]){
+		// 	//beatHeart();
+		// 	bi++;
+		// }
+		// if(abi < artBeatConv.length-1 && songMark >= artBeatConv[abi]){
+		// 	//beatOuterHeart();
 
-			energy-=1;			//missed a normal beat
-			if(energy < 0)	
-				energy = 0;
-
-			// updateBackground();
-			abi++;
-		}
-		if(ri < rhythmConv.length-1 && songMark >= rhythmConv[ri]){
-			//beatHeart();
-			ri++;
-		}
+		// 	// updateBackground();
+		// 	abi++;
+		// }
+		// if(ri < rhythmConv.length-1 && songMark >= rhythmConv[ri]){
+		// 	//beatHeart();
+		// 	ri++;
+		// }
 	}
 
 
 
     // reset
     if(keys[reset_key]){
-        GAME_OVER = false;
-        ALL_OBSTACLES = [];
-        ALL_OBJS = [player];
-        player.x = 100;
-        player.y = 200;
-        player.velY = 0;
-        player.jumping = false;
+        resetMap();
     }
 
 	//debug
-	var settings = "debug here";
+	var settings = "Song Mark: " + songMark;
+    settings += " | Song Beat Num: " + songBeatNum;
 
     levelText.innerHTML = "Level: " + HARDNESS;
     goodJumpsText.innerHTML = "Good Jumps: " + good_jumps;
     hitsText.innerHTML = "Hits: " + hits;
 
-	//document.getElementById('debug').innerHTML = settings;
+	document.getElementById('debug').innerHTML = settings;
 }
 
 

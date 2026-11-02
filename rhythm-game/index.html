@@ -56,7 +56,12 @@
 				<p id="good_jumps">Good Jumps: 0</p>
 				<p id="hits">Hits: 0</p>	
 			</div>
+			<p id="debug">Settings: None</p>
 
+			<input type='checkbox' id='invincible' onchange="player.invincible = this.checked;"> Invincible Mode<br>
+			<input type="range" id="offsetMusic" min="0" max="1" step="0.01" value="0.23"> Music Offset<br>
+			<input type="range" id="speed" min="1" max="10" step="1" value="2.75" onchange="OBS_SPEED = this.value;"> Speed
+			
 			
 		</div>	
 		

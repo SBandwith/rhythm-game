@@ -1,20 +1,3 @@
-//set up the canvas
-var beatCanvas = document.createElement("canvas");
-beatCanvas.id = "beatList";
-var btx = beatCanvas.getContext("2d");
-beatCanvas.width = 1020;
-beatCanvas.height = 80;
-// document.body.appendChild(beatCanvas);
-
-var zoomBeatCanvas = document.createElement("canvas");
-zoomBeatCanvas.id = "beatList";
-var zbtx = zoomBeatCanvas.getContext("2d");
-zoomBeatCanvas.width = 1020;
-zoomBeatCanvas.height = 80;
-document.body.appendChild(zoomBeatCanvas);
-
-
-
 var marker = 0;
 var offsetX = 10;
 
@@ -39,9 +22,6 @@ let ri = 0;		//rhythm index
 let songMark = 0;
 let energy = 0;
 let energyThresh = 80;
-
-
-
 
 //KEYS
 
@@ -150,6 +130,8 @@ function loadMusic(e){
 		});
 	}
 	freader.readAsArrayBuffer(file);
+
+	playMusic();
 }
 
 //find the peaks of the song
@@ -222,6 +204,7 @@ function calculateBPM(){
 	bpm = Object.keys(beatGroup).reduce(function(a,b){return beatGroup[a] > beatGroup[b] ? a : b});
 	bpm = parseInt(bpm);
 	console.log(bpm);
+	SONG_BPM = bpm;
 
 	//make artificial beats
 	totBeats = Math.round((bpm*aud.duration)/60);
@@ -238,6 +221,7 @@ function playMusic(){
 	if(song != null){
 		if(aud.paused){
 			aud.play();
+			resetMap();
 			return;
 		}else{
 			aud.pause();
@@ -282,7 +266,7 @@ function showPeaksnBeats(){
 	ctx.fillStyle = "#ff0000";
 	ctx.fillRect(offsetX-4, y, 4,20);
 
-	ctx.translate(marker, 0);
+	// ctx.translate(marker, 0);
 
 
 
