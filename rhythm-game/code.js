@@ -11,7 +11,17 @@ var JUMP = -8;
 var OBS_SPEED = 4;
 
 var GAME_OVER = false;
-var SONG_BPM = 130;
+
+
+var SONG_BPM = 80;
+var HARDNESS = 1;
+var beat_ct = 0;
+
+var UP_LEVEL_CT = 4;
+
+var hits = 0;
+var good_jumps = 0;
+
 
 //camera
 var camera = {
@@ -20,7 +30,7 @@ var camera = {
 };
 
 
-function gameObj(x,y,w,h,img){
+function gameObj(x,y,w,h,img,img_offset=null){
     this.x = x;
     this.y = y;
     this.w = w;
@@ -28,24 +38,27 @@ function gameObj(x,y,w,h,img){
     this.velX = 0;
     this.velY = GRAVITY;
     this.img = img;
+    this.img_offset = img_offset;
     this.bbox = new bBox(0, 0, w, h);
+    this.cooldown = false;
 }
 
 class Obstacle{
-    constructor(x, y, w, h, img){
+    constructor(x, y, w, h){
         this.x = x;
         this.y = y;
         this.w = w;
         this.h = h;
         this.velX = 0;
         this.velY = 0;
-        this.img = img;
+        this.img = document.getElementById("spikeIMG");
         this.bbox = new bBox(0, 0, w, h);
         this.alive = true;
+        this.cooldown = false;
     }
 
     update(){
-        this.x -= 60000*SONG_BPM;
+        this.x -= Math.floor((canvas.width-player.x) / SONG_BPM);
         if(this.x + this.w <= 0) {
             this.alive = false;
         }
@@ -65,11 +78,14 @@ function bBox(x,y,w,h){
     this.h = h;
 } 
 
-var player = new gameObj(100,100,64,64,null);
+var player = new gameObj(100,100,20,32,document.getElementById("player1Img"),{x:-21,y:-20});
 var ground = new gameObj(0,300,canvas.width,100,null);
 var firstObs = new gameObj(400,200,32,32,null);
 
-var ALL_OBJS = [player,firstObs];
+var ALL_OBJS = [player];
+var ALL_OBSTACLES = [];
+
+var oi = 0;     // obstacle interval
 
 
 // make a load image function
@@ -93,7 +109,8 @@ var a_key = "KeyA";   //[Z]
 var b_key = "KeyB";   //[X]
 var shift_key = "ShiftLeft";  //[Shift]
 var space_key = "Space";
-var actionKeySet = [shift_key,a_key, b_key,space_key];
+var reset_key = "KeyR";
+var actionKeySet = [shift_key,a_key, b_key,space_key, reset_key];
 
 var keys = [];
 
@@ -129,6 +146,43 @@ function anyMoveKey(){
 function anyActionKey(){
 	return (keys[a_key] || keys[b_key]);
 }
+
+////////////////   GENERATOR FUNCTIONS   /////////////////
+
+// makes generic spikes appear at the edge of the screen
+function generateObstacle(){
+    if(GAME_OVER)
+        return;
+
+
+    // reset the beat
+    beat_ct++;
+    if (beat_ct % 4 === 0) {
+        beat_ct = 0;
+    }
+
+    if(HARDNESS == 2 && beat_ct % 2 != 0){
+        return;
+    }
+    else if(HARDNESS == 1 && beat_ct != 0){
+        return;
+    }
+
+    
+
+
+    var x = canvas.width;
+    var y = 270 ;
+    var w = 32;
+    var h = 32;
+    var obs = new Obstacle(x, y, w, h);
+    ALL_OBSTACLES.push(obs);
+    // ALL_OBJS.push(obs);
+
+    console.log("beat");
+}
+
+oi = setInterval(generateObstacle, 1000/((SONG_BPM / 60)));
 
 
 ////////////////   COLLISIONS FUNCTIONS   /////////////////
@@ -178,14 +232,39 @@ function render(){
 	
 	/*   add draw functions here  */
     if(player.img != null) {
-        ctx.drawImage(player.img, player.x, player.y, 64,64);
+        if(player.cooldown){
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "#560000"; // red color to indicate cooldown
+        }
+        ctx.drawImage(player.img, player.x+player.img_offset.x, player.y+player.img_offset.y, 64,64);
+        ctx.globalAlpha = 1; // reset alpha after drawing
     }
  
     // show first obstacle
+    // ctx.fillStyle = "#2200ff";
+    // if(firstObs) {
+    //     ctx.fillRect(firstObs.x, firstObs.y, firstObs.w, firstObs.h );
+    // }
+
+    // draw all obstacles
     ctx.fillStyle = "#2200ff";
-    if(firstObs) {
-        ctx.fillRect(firstObs.x, firstObs.y, firstObs.w, firstObs.h );
-    }
+    ALL_OBSTACLES.forEach(function(obs) {
+        if(obs.img != null) {
+            obs.render();
+        }else{
+            ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+        }
+    });
+
+
+    // debug render the bounding boxes of all objects
+    ALL_OBJS.forEach(function(obj) {
+        ctx.strokeStyle = "#ff0000";
+        ctx.strokeRect(obj.bbox.x + obj.x, obj.bbox.y + obj.y, obj.bbox.w, obj.bbox.h);
+    });
+
+    ctx.strokeStyle = "#0000ff";
+    ctx.strokeRect(player.bbox.x + player.x, player.bbox.y + player.y, player.bbox.w, player.bbox.h);
 
 	ctx.restore();
 }
@@ -218,7 +297,7 @@ function update(){
     }
 
 
-    // obstacle logic
+    // first obstacle logic
     // if(!GAME_OVER){
     //     firstObs.x -= OBS_SPEED;
     //     if(firstObs.x + firstObs.w <= 0) {
@@ -236,8 +315,50 @@ function update(){
     //     }
     // }
 
+    // move the obstacles + check collisions
+    if(!GAME_OVER){
+        ALL_OBSTACLES.forEach(function(o){
+            o.update();
 
+            // if touching player, register a hit and apply cooldown
+            if(!player.cooldown && isColliding(player,o)){
+                hits++;
+                good_jumps = 0;
+                player.cooldown = true;
+                setTimeout(function(){
+                    player.cooldown = false;
+                }, 1000); // 1 second cooldown
+            }else if(!player.cooldown && !o.cooldown && o.x + o.w < player.x){
+                good_jumps++;
+                o.cooldown = true;
+
+                if(good_jumps > 0 && good_jumps % UP_LEVEL_CT == 0){
+                    HARDNESS++; // increase hardness for every 10 good jumps
+                    if(HARDNESS > 3){
+                        HARDNESS = 3; // cap the maximum hardness
+                    }
+                }
+            }
+        });
+    }
+
+
+    // reduce the level until game over
+    if(hits >= 3){
+        if(HARDNESS == 1){
+            GAME_OVER = true;
+        }else{
+            hits = 0; // reset hits for non-hard mode
+            HARDNESS--; // reset hardness for non-hard mode
+            good_jumps = 0; // reset good jumps for non-hard mode
+        }
+    }
+
+    // increase the level
     
+
+            
+        
 
 }
 
@@ -245,8 +366,12 @@ function update(){
 
 //game initialization function
 function init(){
-    player.img = document.getElementById("playerIMG");
+    player.img = document.getElementById("player1IMG");
 }
+
+var levelText = document.getElementById("level");
+var goodJumpsText = document.getElementById("good_jumps");
+var hitsText = document.getElementById("hits");
 
 //main game loop
 function main(){
@@ -267,8 +392,23 @@ function main(){
 		keyTick=0;
 	}
 
+    // reset
+    if(keys[reset_key]){
+        GAME_OVER = false;
+        ALL_OBSTACLES = [];
+        ALL_OBJS = [player];
+        player.x = 100;
+        player.y = 200;
+        player.velY = 0;
+        player.jumping = false;
+    }
+
 	//debug
 	var settings = "debug here";
+
+    levelText.innerHTML = "Level: " + HARDNESS;
+    goodJumpsText.innerHTML = "Good Jumps: " + good_jumps;
+    hitsText.innerHTML = "Hits: " + hits;
 
 	//document.getElementById('debug').innerHTML = settings;
 }

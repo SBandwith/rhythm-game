@@ -25,12 +25,26 @@
             .gameIMG{
                 display:none;
             }
+
+			#stat{
+				display:flex;
+				justify-content: space-between;
+			}
+			#stats p{
+				margin: auto;
+			}
 		</style>
 	</head>
 	<body onload="init()">
 		<!--<div id="debugBar"><p id="debug" style="color:white">...</p></div>-->
 		<canvas id='game'>Browser does not support HTML5 canvas</canvas>
-		<script src="code.js"></script>
+
+		<div id="stats">
+			<p id="level">Level: 0</p>
+			<p id="good_jumps">Good Jumps: 0</p>
+			<p id="hits">Hits: 0</p>
+		</div>	
+		
         <img src="assets/p5.png" class="gameIMG" id="playerDemoIMG"> 
         <img src="assets/star.png" class="gameIMG" id="starImg"> 
         <img src="assets/spike.png" class="gameIMG" id="spikeImg">	
@@ -38,5 +52,10 @@
         <img src="assets/water.png" class="gameIMG" id="waterImg">
         <img src="assets/player1.png" class="gameIMG" id="player1IMG">
         <img src="assets/player2.png" class="gameIMG" id="player2IMG">
+
+
+
+
+		<script src="code.js"></script>
 	</body>
 </html>
