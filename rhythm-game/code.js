@@ -11,6 +11,7 @@ var JUMP = -8;
 var OBS_SPEED = 4;
 
 var GAME_OVER = false;
+var SONG_BPM = 130;
 
 //camera
 var camera = {
@@ -30,13 +31,31 @@ function gameObj(x,y,w,h,img){
     this.bbox = new bBox(0, 0, w, h);
 }
 
+class Obstacle{
+    constructor(x, y, w, h, img){
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.velX = 0;
+        this.velY = 0;
+        this.img = img;
+        this.bbox = new bBox(0, 0, w, h);
+        this.alive = true;
+    }
 
-function obstacle(x,y){
-    this.x = x;
-    this.y = y;
-    this.velX = 0;
-    this.velY = 0;
-    this.bbox = new bBox(0, 0, 64, 64);
+    update(){
+        this.x -= 60000*SONG_BPM;
+        if(this.x + this.w <= 0) {
+            this.alive = false;
+        }
+    }
+
+    render(ctx){
+        if(this.alive && this.img != null) {
+            ctx.drawImage(this.img, this.x, this.y, this.w, this.h);
+        }
+    }
 }
 
 function bBox(x,y,w,h){
@@ -44,7 +63,7 @@ function bBox(x,y,w,h){
     this.y = y;
     this.w = w;
     this.h = h;
-}
+} 
 
 var player = new gameObj(100,100,64,64,null);
 var ground = new gameObj(0,300,canvas.width,100,null);
@@ -200,22 +219,24 @@ function update(){
 
 
     // obstacle logic
-    if(!GAME_OVER){
-        firstObs.x -= OBS_SPEED;
-        if(firstObs.x + firstObs.w <= 0) {
-            firstObs.x = canvas.width-1;
-        }
+    // if(!GAME_OVER){
+    //     firstObs.x -= OBS_SPEED;
+    //     if(firstObs.x + firstObs.w <= 0) {
+    //         firstObs.x = canvas.width-1;
+    //     }
 
-        if(isColliding(player,firstObs)){
-            GAME_OVER = true;
-        }
+    //     if(isColliding(player,firstObs)){
+    //         GAME_OVER = true;
+    //     }
   
-    }else{
-        if(keys[space_key]){
-            GAME_OVER = false;
-            firstObs.x = canvas.width-1;
-        }
-    }
+    // }else{
+    //     if(keys[space_key]){
+    //         GAME_OVER = false;
+    //         firstObs.x = canvas.width-1;
+    //     }
+    // }
+
+
     
 
 }
