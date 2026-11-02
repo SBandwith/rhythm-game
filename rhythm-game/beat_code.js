@@ -5,7 +5,7 @@ var threshold = 0.5;
 var beatThreshold = 0.8;
 var peaks = [];
 
-var tempoRange = [85,170];
+var tempoRange = [55,140];
 var beatGroup = {};
 var bpm = 0;
 var totBeats = 0;
