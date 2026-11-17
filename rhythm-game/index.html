@@ -122,8 +122,8 @@
 					<label><input type="checkbox" id="invincible" onchange="player.invincible = this.checked;" checked> Invincible Mode</label>
 				</div>
 				<div class="setting">
-					<label for="offsetMusic">Music Offset <span class="value" id="offsetMusicValue">0.23s</span></label>
-					<input type="range" id="offsetMusic" min="0" max="1" step="0.01" value="0.23">
+					<label for="offsetMusic">Timing Calibration <span class="value" id="offsetMusicValue">0.00s</span></label>
+					<input type="range" id="offsetMusic" min="-0.5" max="0.5" step="0.01" value="0">
 				</div>
 				<div class="setting">
 					<label for="speed">Obstacle Speed <span class="value" id="speedValue">4</span></label>
@@ -131,16 +131,16 @@
 				</div>
 				<div class="setting">
 					<label for="bpm">BPM <span class="value" id="bpmValue">80</span></label>
-					<input type="range" id="bpm" min="1" max="200" step="1" value="80" oninput="SONG_BPM = Number(this.value);">
+					<input type="range" id="bpm" min="40" max="200" step="0.01" value="80" oninput="SONG_BPM = Number(this.value); ALL_OBSTACLES = []; resyncBeatSchedule();">
 				</div>
 				<div class="row">
 					<div class="setting">
-						<label for="gravity">Gravity</label>
-						<input type="number" id="gravity" min="1" max="20" step="1" value="8" oninput="GRAVITY = Number(this.value);">
+						<label for="jumpHeight">Jump Height (px)</label>
+						<input type="number" id="jumpHeight" min="40" max="200" step="5" value="100" oninput="JUMP_HEIGHT = Number(this.value);">
 					</div>
 					<div class="setting">
-						<label for="jump">Jump</label>
-						<input type="number" id="jump" min="-20" max="0" step="1" value="-10" oninput="JUMP = Number(this.value);">
+						<label for="airBeats">Air Time (beats)</label>
+						<input type="number" id="airBeats" min="0.25" max="1" step="0.05" value="0.75" oninput="AIR_BEATS = Number(this.value);">
 					</div>
 				</div>
 			</div>
@@ -150,7 +150,7 @@
 			var sliderFormats = {
 				offsetMusic: function(v){ return Number(v).toFixed(2) + "s"; },
 				speed: function(v){ return v; },
-				bpm: function(v){ return v; }
+				bpm: function(v){ return Number(v).toFixed(2); }
 			};
 			function updateSliderLabel(id){
 				var input = document.getElementById(id);

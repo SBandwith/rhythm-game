@@ -106,8 +106,20 @@ function loadMusic(e){
 
 function loadSong(song_name){
 	let song_data = SONG_LIST_DATA[song_name];
+	if(!song_data)
+		return;
 	aud.src = song_data.file;
 	aud.load();
+
+	// use the measured values from songlist.json; only auto-detect if the bpm is missing
+	if (song_data.bpm)
+		SONG_BPM = song_data.bpm;
+	SONG_OFFSET = song_data.offset || 0;
+	if (song_data.level)
+		HARDNESS = song_data.level;
+	if (song_data.speed)
+		OBS_SPEED = song_data.speed;
+	updateBPMSlider();
 
 	// Load the audio file from the SONG_LIST_MP3S object
 	fetch(song_data.file)
@@ -121,24 +133,19 @@ function loadSong(song_name){
 
 			getPeaksAtThreshold([song.buffer.getChannelData(0), song.buffer.getChannelData(1)]);
 			getBeats([song.buffer.getChannelData(0), song.buffer.getChannelData(1)]);
-			calculateBPM();
+			calculateBPM(!song_data.bpm);
 			resetMusic();
 		})
 		.catch(error => console.error('Error loading song:', error));
 
-	// set the other song properties
-	if (song_data.bpm != 0)
-		SONG_BPM = song_data.bpm;
-	if (song_data.offset != 0)
-		SONG_OFFSET = song_data.offset;
-	if (song_data.level != 0)
-		SONG_DIFFICULTY = song_data.level;
-	if (song_data.speed != 0)
-		OBS_SPEED = song_data.speed;
-
 	// finally play the song
 	playMusic();
 	
+}
+
+function updateBPMSlider(){
+	var bpmSlider = document.getElementById("bpm");
+	if (bpmSlider) { bpmSlider.value = SONG_BPM; if (typeof updateSliderLabel === "function") updateSliderLabel("bpm"); }
 }
 
 function playSong(){
@@ -186,16 +193,20 @@ function getBeats(data){
 }
 
 
-function calculateBPM(){
+// rough BPM guess from loud peaks. Only used for songs without a bpm in songlist.json,
+// because it's often off by a few BPM (enough to drift a whole beat within a minute).
+function calculateBPM(useForGame = true){
 	beatGroup = {};
 
-	if(beats.length == 0)
+	if(beats.length < 3)
 		return;
+
+	let sampleRate = song.buffer.sampleRate;	// was hard-coded to 48000 (most mp3s are 44100)
 
 	//get the surrounding beat per beat
 	for(let b=1;b<beats.length-1;b++){
-		let tempo = (60 * 48000) / (beats[b+1] - beats[b]);	//tempo
-		let tempo2 = (60 * 48000) / (beats[b] - beats[b-1]);	//tempo
+		let tempo = (60 * sampleRate) / (beats[b+1] - beats[b]);	//tempo
+		let tempo2 = (60 * sampleRate) / (beats[b] - beats[b-1]);	//tempo
 
 
 		while (tempo < tempoRange[0])
@@ -211,37 +222,29 @@ function calculateBPM(){
 		tempo = Math.round(tempo);
 		tempo2 = Math.round(tempo2);
 
-		if (tempo in beatGroup)
-			beatGroup[tempo]++;
-		else 
-			beatGroup[tempo] = 1;
-
-		if (tempo in beatGroup)
-			beatGroup[tempo2]++;
-		else 
-			beatGroup[tempo2] = 1;
+		beatGroup[tempo] = (beatGroup[tempo] || 0) + 1;
+		beatGroup[tempo2] = (beatGroup[tempo2] || 0) + 1;
 	}
 
 
 	bpm = Object.keys(beatGroup).reduce(function(a,b){return beatGroup[a] > beatGroup[b] ? a : b});
 	bpm = parseInt(bpm);
-	SONG_BPM = bpm;
-	var bpmSlider = document.getElementById("bpm");
-	if (bpmSlider) { bpmSlider.value = bpm; if (typeof updateSliderLabel === "function") updateSliderLabel("bpm"); }
+	console.log("DETECTED BPM: " + bpm + (useForGame ? " (using it)" : " (using songlist.json bpm " + SONG_BPM + ")"));
+
+	if(useForGame){
+		SONG_BPM = bpm;
+		SONG_OFFSET = 0;
+		updateBPMSlider();
+	}
 
 	//make artificial beats
-	totBeats = Math.round((bpm*aud.duration)/60);
+	totBeats = Math.round((SONG_BPM*song.buffer.duration)/60);
 	let spread = 1.0/totBeats;
 	artBeatConv = [];
 	for(let t=0;t<totBeats;t++){
 		let b = t*spread;
 		artBeatConv.push(b);
 	}
-
-	console.log("CALCULATED BPM: " + bpm);
-
-	// set BPM of slider in the HTML
-	document.getElementById("bpm").value = bpm;
 }
 
 //plays the imported music
