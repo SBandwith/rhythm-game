@@ -18,34 +18,21 @@ let bi = 0;		//beat index
 let abi = 0;	//artificial beat index
 let ri = 0;		//rhythm index
 
-
 let songMark = 0;
-let energy = 0;
-let energyThresh = 80;
 
 //KEYS
-
-/*
-// directionals
-var upKey = 38;     //[Up]
-var leftKey = 37;   //[Left]
-var rightKey = 39;  //[Rigt]
-var downKey = 40;   //[Down]
-var moveKeySet = [upKey, leftKey, rightKey, downKey];
-
-// A and b
-var a_key = 90;   //[Z]
-var b_key = 88;   //[X]
-var actionKeySet = [a_key, b_key];
-
-var keys = [];
-*/
 
 
 let aud = document.getElementById("audio");
 aud.volume = 1.0
-let songFileInput = document.getElementById('songFile');
-songFileInput.addEventListener('change', loadMusic);
+
+// file import
+// let songFileInput = document.getElementById('songFile');
+// songFileInput.addEventListener('change', loadMusic);
+
+var SONG_LIST_MP3S = {};
+var SONG_LIST_DATA = {};
+
 
 
 //////////////////    GENERIC FUNCTIONS   ///////////////
@@ -59,25 +46,6 @@ function inArr(arr, e){
 }
 
 
-////////////////   KEYBOARD FUNCTIONS  //////////////////
-
-
-// key events
-var keyTick = 0;
-var kt = null; 
-
-function anyKey(){
-	return anyMoveKey() || anyActionKey();
-}
-
-//check if any directional key is held down
-function anyMoveKey(){
-	return (keys[upKey] || keys[downKey] || keys[leftKey] || keys[rightKey])
-}
-
-function anyActionKey(){
-	return (keys[a_key] || keys[b_key]);
-}
 
 
 ///////////////////   AUDIO FUNCTIONS   //////////////////
@@ -122,6 +90,8 @@ function loadMusic(e){
 				getPeaksAtThreshold(e.renderedBuffer.getChannelData(0));
 			}
 			*/
+
+
 			getPeaksAtThreshold([song.buffer.getChannelData(0), song.buffer.getChannelData(1)]);
 			getBeats([song.buffer.getChannelData(0), song.buffer.getChannelData(1)]);
 			calculateBPM();
@@ -132,6 +102,57 @@ function loadMusic(e){
 	freader.readAsArrayBuffer(file);
 
 	playMusic();
+}
+
+function loadSong(song_name){
+	let song_data = SONG_LIST_DATA[song_name];
+	aud.src = song_data.file;
+	aud.load();
+
+	// Load the audio file from the SONG_LIST_MP3S object
+	fetch(song_data.file)
+		.then(response => response.arrayBuffer())
+		.then(arrayBuffer => context.decodeAudioData(arrayBuffer))
+		.then(audioBuffer => {
+			song = context.createBufferSource();
+			song.connect(context.destination);
+			song.buffer = audioBuffer;
+			console.log("got buffer for " + song_name);
+
+			getPeaksAtThreshold([song.buffer.getChannelData(0), song.buffer.getChannelData(1)]);
+			getBeats([song.buffer.getChannelData(0), song.buffer.getChannelData(1)]);
+			calculateBPM();
+			resetMusic();
+		})
+		.catch(error => console.error('Error loading song:', error));
+
+	// set the other song properties
+	if (song_data.bpm != 0)
+		SONG_BPM = song_data.bpm;
+	if (song_data.offset != 0)
+		SONG_OFFSET = song_data.offset;
+	if (song_data.level != 0)
+		SONG_DIFFICULTY = song_data.level;
+	if (song_data.speed != 0)
+		OBS_SPEED = song_data.speed;
+
+	// finally play the song
+	playMusic();
+	
+}
+
+function playSong(){
+	if(song != null){
+		if(aud.paused){
+			aud.play();
+			resetMap();
+			return;
+		}else{
+			aud.pause();
+			return;
+		}
+		
+	}
 }
 
 //find the peaks of the song
@@ -163,6 +184,7 @@ function getBeats(data){
 	}
 	beatConv = beats.map(b => b/song.buffer.length);
 }
+
 
 function calculateBPM(){
 	beatGroup = {};
@@ -203,8 +225,9 @@ function calculateBPM(){
 
 	bpm = Object.keys(beatGroup).reduce(function(a,b){return beatGroup[a] > beatGroup[b] ? a : b});
 	bpm = parseInt(bpm);
-	console.log(bpm);
 	SONG_BPM = bpm;
+	var bpmSlider = document.getElementById("bpm");
+	if (bpmSlider) { bpmSlider.value = bpm; if (typeof updateSliderLabel === "function") updateSliderLabel("bpm"); }
 
 	//make artificial beats
 	totBeats = Math.round((bpm*aud.duration)/60);
@@ -214,6 +237,11 @@ function calculateBPM(){
 		let b = t*spread;
 		artBeatConv.push(b);
 	}
+
+	console.log("CALCULATED BPM: " + bpm);
+
+	// set BPM of slider in the HTML
+	document.getElementById("bpm").value = bpm;
 }
 
 //plays the imported music
@@ -235,7 +263,6 @@ function playMusic(){
 function resetMusic(){
 	if(song != null){
 		aud.pause();
-		energy = 0;
 		aud.currentTime = 0;
 		marker = 0;
 		songMark = 0;
@@ -243,6 +270,9 @@ function resetMusic(){
 		abi = 0;
 		ri = 0;
 		marker = 0;
+		hits = 0;
+		good_jumps = 0;
+		custom_beat_mark = [];
 		//document.getElementById('playBtn').innerHTML = "Play Song";
 	}
 }
@@ -267,8 +297,6 @@ function showPeaksnBeats(){
 	ctx.fillRect(offsetX-4, y, 4,20);
 
 	// ctx.translate(marker, 0);
-
-
 
 
 	//draw rhythm and noise peaks
@@ -353,6 +381,29 @@ function hitAMark(){
 		return true;
 
 	return false;
+}
+
+function audio_init(){
+	//initialize audio context
+	window.AudioContext = window.AudioContext || window.webkitAudioContext;
+	context = new AudioContext();
+
+	// import the songs from the songlist.json file
+    fetch('songlist.json')
+        .then(response => response.json())
+        .then(data => {
+            const songSelect = document.getElementById('songSelect');
+            data.songs.forEach(song => {
+                const option = document.createElement('option');
+                option.value = song.title;
+                option.innerHTML = song.title + " - " + song.artist;
+                songSelect.appendChild(option);
+				SONG_LIST_DATA[song.title] = song;		// Store the song data in the SONG_LIST_MP3S object
+            });
+        })
+        .catch(error => console.error('Error loading song list:', error));
+
+    
 }
 
 /////////////////   HTML5 FUNCTIONS  //////////////////

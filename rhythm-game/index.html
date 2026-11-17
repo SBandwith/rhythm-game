@@ -32,46 +32,143 @@
 			#gameStats{
 				display: flex;
 				justify-content: space-between;
-				margin-top:1em;
+				margin:1em auto;
+				width:30%;
 			}
 			#gameStats p{
 				margin: auto;
 			}
+			#settings{
+				width: 320px;
+				margin: 1.5em auto;
+				padding: 1em 1.25em;
+				border: 1px solid #ccc;
+				border-radius: 8px;
+				background: #f7f7f7;
+				text-align: left;
+				font-family: sans-serif;
+				font-size: 14px;
+			}
+			#settings h3{
+				margin: 0 0 0.75em;
+				font-size: 16px;
+			}
+			#settings .setting{
+				margin: 0.9em 0;
+			}
+			#settings .setting label{
+				display: flex;
+				justify-content: space-between;
+				margin-bottom: 0.3em;
+			}
+			#settings .value{
+				font-family: monospace;
+				font-weight: bold;
+			}
+			#settings input[type="range"]{
+				width: 100%;
+				margin: 0;
+			}
+			#settings .row{
+				display: flex;
+				gap: 1em;
+			}
+			#settings .row .setting{
+				flex: 1;
+			}
+			#settings input[type="number"]{
+				width: 100%;
+				box-sizing: border-box;
+			}
+			#settings .checkbox label{
+				display: flex;
+				align-items: center;
+				gap: 0.5em;
+				justify-content: flex-start;
+			}
 		</style>
 	</head>
+
 	<body onload="init()">
 		<!--<div id="debugBar"><p id="debug" style="color:white">...</p></div>-->
 		<canvas id='game'>Browser does not support HTML5 canvas</canvas>
 
 		
 		<div id="stats">
-			<div id='inputs'>
+			<div>
+				<select id="songSelect" onchange="loadSong(this.value)">
+					<option value="">Select a song</option>
+					<!-- TODO: add songs from songlist.json -->
+				</select>
+				<button id="playBtn2" onclick="playSong()">Play Song</button>
+				<button id="resetBtn2" onclick="resetMusic()">Reset Song</button>
+			</div>
+			<!-- <div id='inputs'>
 				<input type='file' name='song' accept='.mp3' id='songFile'>
 				<button id='playBtn' onclick="playMusic()">Play Song</button>
 				<button id='resetBtn' onclick="resetMusic()">Reset Song</button>
-			</div>
+			</div> -->
 			<audio id='audio'></audio>
 			<div id="gameStats">
 				<p id="level">Level: 0</p>
 				<p id="good_jumps">Good Jumps: 0</p>
 				<p id="hits">Hits: 0</p>	
 			</div>
-			<p id="debug">Settings: None</p>
+			<p id="debug">Debug: None</p>
 
-			<input type='checkbox' id='invincible' onchange="player.invincible = this.checked;"> Invincible Mode<br>
-			<input type="range" id="offsetMusic" min="0" max="1" step="0.01" value="0.23"> Music Offset<br>
-			<input type="range" id="speed" min="1" max="10" step="1" value="2.75" onchange="OBS_SPEED = this.value;"> Speed
-			
-			
-		</div>	
+			<div id="settings">
+				<h3>Settings</h3>
+				<div class="setting checkbox">
+					<label><input type="checkbox" id="invincible" onchange="player.invincible = this.checked;" checked> Invincible Mode</label>
+				</div>
+				<div class="setting">
+					<label for="offsetMusic">Music Offset <span class="value" id="offsetMusicValue">0.23s</span></label>
+					<input type="range" id="offsetMusic" min="0" max="1" step="0.01" value="0.23">
+				</div>
+				<div class="setting">
+					<label for="speed">Obstacle Speed <span class="value" id="speedValue">4</span></label>
+					<input type="range" id="speed" min="1" max="10" step="1" value="4" oninput="OBS_SPEED = Number(this.value);">
+				</div>
+				<div class="setting">
+					<label for="bpm">BPM <span class="value" id="bpmValue">80</span></label>
+					<input type="range" id="bpm" min="1" max="200" step="1" value="80" oninput="SONG_BPM = Number(this.value);">
+				</div>
+				<div class="row">
+					<div class="setting">
+						<label for="gravity">Gravity</label>
+						<input type="number" id="gravity" min="1" max="20" step="1" value="8" oninput="GRAVITY = Number(this.value);">
+					</div>
+					<div class="setting">
+						<label for="jump">Jump</label>
+						<input type="number" id="jump" min="-20" max="0" step="1" value="-10" oninput="JUMP = Number(this.value);">
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			// Show each slider's current value in its label
+			var sliderFormats = {
+				offsetMusic: function(v){ return Number(v).toFixed(2) + "s"; },
+				speed: function(v){ return v; },
+				bpm: function(v){ return v; }
+			};
+			function updateSliderLabel(id){
+				var input = document.getElementById(id);
+				document.getElementById(id + "Value").textContent = sliderFormats[id](input.value);
+			}
+			Object.keys(sliderFormats).forEach(function(id){
+				document.getElementById(id).addEventListener("input", function(){ updateSliderLabel(id); });
+				updateSliderLabel(id);
+			});
+		</script>
 		
-        <img src="assets/p5.png" class="gameIMG" id="playerDemoIMG"> 
-        <img src="assets/star.png" class="gameIMG" id="starImg"> 
-        <img src="assets/spike.png" class="gameIMG" id="spikeImg">	
-        <img src="assets/vines.png" class="gameIMG" id="vineIMG"> 
-        <img src="assets/water.png" class="gameIMG" id="waterImg">
-        <img src="assets/player1.png" class="gameIMG" id="player1IMG">
-        <img src="assets/player2.png" class="gameIMG" id="player2IMG">
+        <img src="assets/imgs/p5.png" class="gameIMG" id="playerDemoIMG"> 
+        <img src="assets/imgs/star.png" class="gameIMG" id="starImg"> 
+        <img src="assets/imgs/spike.png" class="gameIMG" id="spikeImg">	
+        <img src="assets/imgs/vines.png" class="gameIMG" id="vineIMG"> 
+        <img src="assets/imgs/water.png" class="gameIMG" id="waterImg">
+        <img src="assets/imgs/player1.png" class="gameIMG" id="player1IMG">
+        <img src="assets/imgs/player2.png" class="gameIMG" id="player2IMG">
 
 		
 

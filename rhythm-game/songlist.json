@@ -1,0 +1,22 @@
+{
+    "songs": [
+        {"title": "360 (JAI WOLF CLUB REMIX)", "artist": "Charli XCX", "file": "assets/mp3s/CHARLI XCX, YUNG LEAN, ROBYN - 360 (JAI WOLF CLUB BABU REMIX).mp3",
+            "offset": 0, "bpm":0, "speed": 0, "gravity": 0, "jump": 0, "level": 1},
+        {"title": "Dancing Queen", "artist": "ABBA", "file": "assets/mp3s/ABBA - Dancing Queen.mp3",
+            "offset": 0, "bpm":0, "speed": 0, "gravity": 0, "jump": 0, "level": 1},
+        {"title": "Rolling in the Deep", "artist": "Adele", "file": "assets/mp3s/Adele - Rolling in the Deep.mp3", 
+            "offset": 0, "bpm":0, "speed": 0, "gravity": 0, "jump": 0, "level": 1},
+        {"title": "Uptown Funk", "artist": "Mark Ronson", "file": "assets/mp3s/Mark Ronson - Uptown Funk.mp3",
+            "offset": 0, "bpm":0, "speed": 0, "gravity": 0, "jump": 0, "level": 1},
+        {"title": "Stayin' Alive", "artist": "Bee Gees", "file": "assets/mp3s/Bee Gees - Stayin' Alive.mp3",
+            "offset": 0, "bpm":0, "speed": 0, "gravity": 0, "jump": 0, "level": 1},
+        {"title": "Stand By Me", "artist": "Ben E. King", "file": "assets/mp3s/Ben E King - Stand By Me.mp3",
+            "offset": 0, "bpm":0, "speed": 0, "gravity": 0, "jump": 0, "level": 1},
+        {"title": "Billie Jean", "artist": "Michael Jackson", "file":"assets/mp3s/Michael Jackson - Billie Jean.mp3",
+            "offset": 0, "bpm":0, "speed": 0, "gravity": 0, "jump": 0, "level": 1},
+        {"title": "Under the Bridge", "artist": "Red Hot Chili Peppers", "file": "assets/mp3s/Red Hot Chili Peppers - Under the Bridge.mp3",
+            "offset": 0, "bpm":0, "speed": 0, "gravity": 0, "jump": 0, "level": 1},
+        {"title": "Wake Me Up Before You Go-Go", "artist": "Wham!", "file": "assets/mp3s/Wham! - Wake Me Up Before You Go-Go.mp3",
+            "offset": 0, "bpm":0, "speed": 0, "gravity": 0, "jump": 0, "level": 1}
+    ]
+}

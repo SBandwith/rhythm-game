@@ -6,12 +6,11 @@ canvas.height = 400;
 
 var size = 16;
 
-var GRAVITY = 4;
-var JUMP = -8;
+var GRAVITY = 8;
+var JUMP = -10;
 var OBS_SPEED = 4;
 
 var GAME_OVER = true;
-
 
 var SONG_BPM = 80;
 var HARDNESS = 1;
@@ -21,6 +20,7 @@ var UP_LEVEL_CT = 4;
 
 var hits = 0;
 var good_jumps = 0;
+var custom_beat_mark = [];
 
 
 //camera
@@ -89,14 +89,6 @@ var ALL_OBSTACLES = [];
 var oi = 0;     // obstacle interval
 
 
-// make a load image function
-
-
-
-
-
-
-//KEYS
 
 // directionals
 var upKey = "ArrowUp";     //[Up]
@@ -289,10 +281,10 @@ function update(){
 
     // jump
     if (keys[space_key] && onGround(player) && !player.jumping){
-        console.log("Jumping!");
         player.jumping = true;
         player.velY = JUMP;
         player.y += player.velY;
+        custom_beat_mark.push(songMark); // mark the jump on the beat
     }else if(onGround(player)) {
         player.jumping = false;
     }
@@ -368,6 +360,9 @@ function update(){
 //game initialization function
 function init(){
     player.img = document.getElementById("player1IMG");
+    player.invincible = document.getElementById("invincible").checked;
+
+    audio_init();
 }
 
 function resetMap(){
@@ -429,26 +424,18 @@ function main(){
 	if(!aud.paused){
 		songMark = (aud.currentTime/aud.duration);
 		songBeatNum = Math.floor((songMark + musicOffset) * totBeats);
-
-
-        
-	
-		// if(bi < beatConv.length-1 && songMark >= beatConv[bi]){
-		// 	//beatHeart();
-		// 	bi++;
-		// }
-		// if(abi < artBeatConv.length-1 && songMark >= artBeatConv[abi]){
-		// 	//beatOuterHeart();
-
-		// 	// updateBackground();
-		// 	abi++;
-		// }
-		// if(ri < rhythmConv.length-1 && songMark >= rhythmConv[ri]){
-		// 	//beatHeart();
-		// 	ri++;
-		// }
 	}
 
+    // calculate the bpm based on the custom beat marks (last 4 jumps)
+    let calculatedBPM = 0;
+    if(custom_beat_mark.length > 1){
+        let beatIntervals = [];
+        for(let i = Math.max(0, custom_beat_mark.length - 4); i < custom_beat_mark.length; i++){
+            beatIntervals.push(custom_beat_mark[i]*1000 - custom_beat_mark[i-1]*1000);
+        }
+        let avgInterval = beatIntervals.reduce((a, b) => a + b, 0) / beatIntervals.length;
+        calculatedBPM = Math.round(60 / avgInterval);
+    }
 
 
     // reset
@@ -459,6 +446,7 @@ function main(){
 	//debug
 	var settings = "Song Mark: " + songMark;
     settings += " | Song Beat Num: " + songBeatNum;
+    settings += " | Calculated BPM: " + calculatedBPM;
 
     levelText.innerHTML = "Level: " + HARDNESS;
     goodJumpsText.innerHTML = "Good Jumps: " + good_jumps;
@@ -466,6 +454,8 @@ function main(){
 
 	document.getElementById('debug').innerHTML = settings;
 }
+
+
 
 
 /////////////////   HTML5 FUNCTIONS  //////////////////
@@ -491,10 +481,18 @@ document.body.addEventListener("keyup", function (e) {
 //prevent scrolling with the game
 window.addEventListener("keydown", function(e) {
     // space and arrow keys
-    if(([32, 37, 38, 39, 40].indexOf(e.code) > -1)){
+    if(([32, 37, 38, 39, 40].indexOf(e.code) > -1 && target == document.body) || inArr(moveKeySet, e.code)) {
         e.preventDefault();
     }
 }, false);
+
+window.addEventListener('keydown', function(event) {
+  if (event.code === 'Space' && event.target === document.body) {
+    event.preventDefault();
+  }
+});
+
+
 
 
 main();
