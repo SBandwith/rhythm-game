@@ -111,6 +111,8 @@ function loadSong(song_name){
 	aud.src = song_data.file;
 	aud.load();
 
+	SONG_NAME = song_name;
+
 	// use the measured values from songlist.json; only auto-detect if the bpm is missing
 	if (song_data.bpm)
 		SONG_BPM = song_data.bpm;

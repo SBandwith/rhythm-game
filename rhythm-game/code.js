@@ -6,7 +6,7 @@ canvas.height = 400;
 
 var size = 16;
 
-var GROUND_Y = 300;         // y of the top of the ground
+var GROUND_Y = 320;         // y of the top of the ground
 
 // ---- TIMING / PHYSICS (all in seconds and pixels, NOT frames) ----
 // Everything is driven off the song clock so it can't drift away from the music
@@ -20,6 +20,7 @@ var MAX_AIR_TIME = 0.80;    // clamp so slow songs don't feel floaty (s)
 var GAME_OVER = true;
 
 var SONG_BPM = 80;          // beats per minute of the current song
+var SONG_NAME = "None";     // name of the current song
 var SONG_OFFSET = 0;        // time (s) in the mp3 of the first beat (from songlist.json)
 var musicOffset = 0;        // user calibration (s) for audio/keyboard lag; + = obstacles later
 var HARDNESS = 1;
@@ -82,11 +83,25 @@ class Obstacle{
         }
     }
 
-    render(ctx){
+    render(ctx, multiplier=1){
         if(this.alive && this.img != null) {
-            ctx.drawImage(this.img, this.x, this.y, this.w, this.h);
+            ctx.drawImage(this.img, this.x, this.y, Math.floor(this.w*multiplier), Math.floor(this.h*multiplier));
         }
     }
+}
+
+//added function
+function randomObstacle(obs) {
+    let randomNum = Math.floor(Math.random() * 3);
+    if(randomNum == 0) {
+        obs.img = document.getElementById("spikeIMG");
+    } else if (randomNum == 1) {
+        obs.img = document.getElementById("waterIMG");
+    // test with star -- replace star as collectable later
+    } else {
+        obs.img = document.getElementById("starIMG");
+    } 
+    return obs;
 }
 
 function bBox(x,y,w,h){
@@ -123,6 +138,12 @@ var actionKeySet = [shift_key,a_key, b_key,space_key, reset_key];
 
 var keys = [];
 var jumpQueued = null;  // song time of a jump press that update() hasn't handled yet
+
+
+// image references
+var bgIMG = document.getElementById("bgIMG");
+
+
 
 
 
@@ -207,7 +228,12 @@ function scheduleObstacles(t){
             continue;
         if(arriveTimeForBeat(k) - lookAhead() < t - 0.25)
             continue;   // we skipped ahead (seek / lag spike): don't spawn obstacles mid-screen
-        ALL_OBSTACLES.push(new Obstacle(arriveTimeForBeat(k), k, 270, 32, 32));
+        
+        let o = new Obstacle(arriveTimeForBeat(k), k, GROUND_Y-32, 32, 32);
+        o = randomObstacle(o);
+        console.log(o);
+        ALL_OBJS.push(o);
+        ALL_OBSTACLES.push(o);
     }
 }
 
@@ -259,13 +285,15 @@ function render(){
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 	//background
-	ctx.fillStyle = "#dedede";
-	ctx.fillRect(0,0,canvas.width, canvas.height);
+	// ctx.fillStyle = "#dedede";
+	// ctx.fillRect(0,0,canvas.width, canvas.height);
 
-    ctx.fillStyle = "#00ff00";
-    ctx.fillRect(0,GROUND_Y,canvas.width,100);
+    ctx.drawImage(bgIMG, 0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = "#000";
+    // ctx.fillStyle = "#00ff00";
+    // ctx.fillRect(0,GROUND_Y,canvas.width,100);
+
+    ctx.fillStyle = "#F00";
     ctx.fillRect(0,GROUND_Y,canvas.width,2)
 
     // beat pulse under the player: flashes when you should press jump
@@ -290,12 +318,39 @@ function render(){
     ctx.fillStyle = "#2200ff";
     ALL_OBSTACLES.forEach(function(obs) {
         if(obs.img != null) {
-            obs.render(ctx);
+            obs.render(ctx, 1.5); // draw obstacles at 1.5x size
         }else{
             ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
         }
     });
 
+
+    // fonts setting
+    ctx.fillStyle = "#5F3B36";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+
+    // song title
+    ctx.font = "32px Squartiqa, Impact, sans-serif";
+    ctx.fillText("Song: " + SONG_NAME, 10, 10);
+
+    // level
+    ctx.font = "24px Squartiqa, Impact, sans-serif";
+    ctx.fillText("Level: " + HARDNESS, 10, 50);
+
+    // star count
+    ctx.font = "24px Squartiqa, Impact, sans-serif";
+    ctx.fillText("Stars: ", canvas.width-150, 20);
+
+    // score
+    ctx.font = "24px Squartiqa, Impact, sans-serif";
+    ctx.fillText("Score: " + good_jumps, canvas.width-100, 50);
+
+
+
+
+
+    // DEBUG: render the bounding boxes of all objects
 
     // debug render the bounding boxes of all objects
     ALL_OBJS.forEach(function(obj) {
@@ -305,6 +360,7 @@ function render(){
 
     ctx.strokeStyle = "#0000ff";
     ctx.strokeRect(player.bbox.x + player.x, player.bbox.y + player.y, player.bbox.w, player.bbox.h);
+
 
 	ctx.restore();
 }
@@ -516,8 +572,30 @@ document.body.addEventListener("keydown", function (e) {
 	}
 });
 
+
+// touchscreen down
+document.body.addEventListener("pointerdown", function (e) {
+    if(inArr(moveKeySet, e.code)){
+		keys[e.code] = true;
+	}else if(inArr(actionKeySet, e.code)){
+		// one jump per press (holding space no longer auto-jumps), timed at the key press
+		if(e.code == space_key && !e.repeat)
+			jumpQueued = songTime();
+		keys[e.code] = true;
+	}
+});
+
 //check for key released
 document.body.addEventListener("keyup", function (e) {
+	if(inArr(moveKeySet, e.code)){
+		keys[e.code] = false;
+	}else if(inArr(actionKeySet, e.code)){
+		keys[e.code] = false;
+	}
+});
+
+//check for key released
+document.body.addEventListener("pointerup", function (e) {
 	if(inArr(moveKeySet, e.code)){
 		keys[e.code] = false;
 	}else if(inArr(actionKeySet, e.code)){
